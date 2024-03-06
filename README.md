@@ -6,9 +6,9 @@ Software tools to work with genetic sequences (reference sequences and short rea
 <nav>
   <ul>
     <li><a href="#link_storage">Storage</a></li>
-    <li><a href="#link_check">checkSeedClassic/checkSeed128: Check if a seed is valid</a></li>
-    <li><a href="#link_iterSeed">iterSeed: Spaced seeds generated iteratively</a></li>	  
-    <li><a href="#link_maxWeight">Seeds of maximum weight</a></li>
+    <li><a href="#link_seed">Spaced seeds</a></li>
+    <li><a href="#link_ternary">Ternary spaced seeds</a></li>	  
+    <li><a href="#link_form">Forming signatures</a></li>
     <li><a href="#link_periodicBlock">periodicBlock: Periodic blocks</a></li>
     <li><a href="#link_bestPerSeed">bestPerSeed: Finding best periodic seeds</a></li>
     <li><a href="#link_bestLaTeX">bestSeedsLaTeX</a></li>
@@ -17,9 +17,7 @@ Software tools to work with genetic sequences (reference sequences and short rea
   </nav>
 
 <h2 id="link_storage">Storage</h2>
-Suppose genetic sequences are arrays of symbols. Only five symbols are possible (<tt>A</tt>, <tt>C</tt>, <tt>G</tt>, <tt>T</tt> and <tt>N</tt>). When comparing two sequences we account for only four symbols (<tt>A</tt>, <tt>C</tt>, <tt>G</tt> and <tt>T</tt>), <tt>N</tt>-symbols are ignored. Performance of an algorithm is the priority compared to the size of storage to be used. Therefore for each symbol we may allocoate four bits, so <tt>A = 1000</tt>, <tt>C = 0100</tt>, <tt>G = 0010</tt>, <tt>T = 0001</tt> and <tt>N = 0000</tt>. As SIMD instructions often deal with 128-bit chunks of data, we may split a genetic seqeunces on 32-symbol chunks and store the data corresponding to each 32-symbol chunk as a 128-bit data. And each of four bits for a symbols we store in a separate 32-bit block of data.
-
-Let us have the following sequence of 32 symbols: <tt>CATAGNCACGTGATCCTAGNCATGTTACCTGT</tt>. We may store this array as
+Suppose genetic sequences are arrays of symbols. Only five symbols are possible (<tt>A</tt>, <tt>C</tt>, <tt>G</tt>, <tt>T</tt> and <tt>N</tt>). When comparing two sequences, we account for only four symbols (<tt>A</tt>, <tt>C</tt>, <tt>G</tt> and <tt>T</tt>) and ignore <tt>N</tt>-symbols. The performance of an algorithm is the priority compared to the storage size. Therefore, for each symbol, we may allocate four bits, so <tt>A = 1000</tt>, <tt>C = 0100</tt>, <tt>G = 0010</tt>, <tt>T = 0001</tt> and <tt>N = 0000</tt>. As SIMD instructions often deal with 128-bit chunks of data, we may split genetic sequences into 32-symbol chunks and store the data corresponding to each 32-symbol chunk as 128-bit data. We store each of the four bits for symbols in a separate 32-bit data block. Let us have the following sequence of 32 symbols: <tt>CATAGNCACGTGATCCTAGNCATGTTACCTGT</tt>. We may store this array as
 
 <table>
   <tr>
@@ -60,6 +58,19 @@ We may set the above letter using <a href="https://software.intel.com/sites/land
   <tt>__m128i m1 = _mm_set_epi32(0xa3412404, 0x40840a10, 0x1810c141, 0x0422108a);</tt>
 </p>
 
+<h2 id="link_seed">Spaced seeds</h2>
+
+Usually spaced seeds are <b>binary</b> ones. For example, we have a seed <tt>1101011101</tt>, <tt>1</tt>-elements mean that we should account for the corresponding elements of a genetic sequence; otherwise, we ignore it. So, for a sequence <tt>ACAGTCCATG</tt> of the same length, we get <tt>AC_G_CCA_G</tt> or after removing spaces, we obtain <tt>ACGCCAG</tt>. Therefore, the seed <tt>1101011101</tt> forms a signature <tt>ACGCCAG</tt>, which can be written as a number after we replace symbols with bits. 
+
+We may shuffle elements of the signature and form other signatures, i.e. <tt>CGACCGA</tt> or <tt>GCCCGAA</tt>. The order of symbols is not essential when we form a signature, and we need to keep the shuffling procedure the same for all genetic sequences we use. The main goal is to make the shuffling procedure as fast as possible so there are as few SIMD operations as possible. 
+
+
+<h2 id="link_ternary">Ternary spaced seeds</h2>
+
+Binary seeds are good for general sequences. However, in genetics, the chance of pointwise mutations is different for pairs of symbols. Therefore there are <b>transition</b> (<tt>A <-> G</tt>, <tt>C <-> T</tt>) and <b>transversion</b> mutations (<tt>A <-> C</tt>, <tt>A <-> T</tt>, <tt>G <-> C</tt>, <tt>G <-> T</tt>). So, instead of binary seeds, we may use <b>ternary</b> ones. We keep the same notations as in <a href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-5-149">this paper</a>: <tt>_</tt> (do not care symbol), <tt>#</tt> (match), <tt>@</tt> (transition mismatch, i.e. when symbols <tt>A</tt> and <tt>G</tt>, <tt>C</tt> and <tt>T</tt> considered as the same symbols).
+
+
+<h2 id="link_form">Forming signatures</h2>
 
 Suppose there is a long reference sequence (for a human genome it may have a length of 3.2 billion symbols). There is also a set of short sequences (called <i>reads</i>), their size is around 50-300 symbols. We know that the reads are chunks of another long sequence which is in some way is close to the reference sequence. Our goal is to align those reads with respect to the reference sequence. 
 
