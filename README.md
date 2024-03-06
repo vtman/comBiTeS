@@ -1,11 +1,11 @@
 # comBiTeS
 <h1>Compacting binary and ternary spaced seeds</h1>
 
-Software tools to work with genetic sequences (reference sequences and short reads) and exploit SIMD instructions for better performance. Spaces seeds are masks that allow us to account for or ignore pointwise differences between two sequences. The seeds can be used to create a library of records (signature, position) for a reference sequence thus helping us to find possible alignment of a read with respect to the reference sequence. Signatures are formed based on non-zero symbols for a spaced seed and are effectively some arrays of bits. As zero elements of seeds provide us with the same bits (independent of actual nucleotide values) we want to ignore them to save space when storing the library. Note that we may shuffle the resulting bits for a signature. While we produce another array of bits, this does not affect the seqeunce alignment process. Therefore when calculating signature values we may just shuffle symbols in a way to fill all gaps created by zero elements of the seed.
+Software tools to work with genetic sequences (reference sequences and short reads) and exploit SIMD instructions for better performance. Spaces seeds are masks that allow us to account for or ignore pointwise differences between two sequences. We can use the seeds to create a library of records (signature, position) for a reference sequence, thus helping us find possible alignments of a read to the reference sequence. Signatures are formed based on non-zero symbols for a spaced seed and are effectively some arrays of bits. As zero elements of seeds provide us with the same bits (independent of actual nucleotide values), we want to ignore them to save space when storing the library. Note that we may shuffle the resulting bits for a signature. While we produce another array of bits, this does not affect the sequence alignment process. Therefore, when calculating signature values, we may shuffle symbols to fill all gaps created by zero seed elements.
 
 <nav>
   <ul>
-    <li><a href="#link_intro">Introduction</a></li>
+    <li><a href="#link_storage">Storage</a></li>
     <li><a href="#link_check">checkSeedClassic/checkSeed128: Check if a seed is valid</a></li>
     <li><a href="#link_iterSeed">iterSeed: Spaced seeds generated iteratively</a></li>	  
     <li><a href="#link_maxWeight">Seeds of maximum weight</a></li>
@@ -16,8 +16,52 @@ Software tools to work with genetic sequences (reference sequences and short rea
   </ul>
   </nav>
 
-<h2 id="link_intro">Introduction</h2>
-We consider sequences of symbols <tt>A</tt>, <tt>C</tt>, <tt>G</tt> and <tt>T</tt>. Suppose there is a long reference sequence (for a human genome it may have a length of 3.2 billion symbols). There is also a set of short sequences (called <i>reads</i>), their size is around 50-300 symbols. We know that the reads are chunks of another long sequence which is in some way is close to the reference sequence. Our goal is to align those reads with respect to the reference sequence. 
+<h2 id="link_storage">Storage</h2>
+Suppose genetic sequences are arrays of symbols. Only five symbols are possible (<tt>A</tt>, <tt>C</tt>, <tt>G</tt>, <tt>T</tt> and <tt>N</tt>). When comparing two sequences we account for only four symbols (<tt>A</tt>, <tt>C</tt>, <tt>G</tt> and <tt>T</tt>), <tt>N</tt>-symbols are ignored. Performance of an algorithm is the priority compared to the size of storage to be used. Therefore for each symbol we may allocoate four bits, so <tt>A = 1000</tt>, <tt>C = 0100</tt>, <tt>G = 0010</tt>, <tt>T = 0001</tt> and <tt>N = 0000</tt>. As SIMD instructions often deal with 128-bit chunks of data, we may split a genetic seqeunces on 32-symbol chunks and store the data corresponding to each 32-symbol chunk as a 128-bit data. And each of four bits for a symbols we store in a separate 32-bit block of data.
+
+Let us have the following sequence of 32 symbols: <tt>CATAGNCACGTGATCCTAGNCATGTTACCTGT</tt>. We may store this array as
+
+<table>
+  <tr>
+    <th>m</th>
+    <th><tt>CATAGNCACGTGATCCTAGNCATGTTACCTGT</tt></th>
+    <th></th>
+  </tr>
+  <tr>
+    <th><i>A</i></th>
+    <th><tt>01010001000010000100010000100000</tt></th>
+    <th><tt>0x0422108a</tt></th>
+  </tr>
+  <tr>
+    <th><i>C</i></th>
+    <th><tt>10000010100000110000100000011000</tt></th>
+    <th><tt>0x1810c141</tt></th>
+  </tr>
+  <tr>
+    <th><i>G</i></th>
+    <th><tt>00001000010100000010000100000010</tt></th>
+    <th><tt>0x40840a10</tt></th>
+  </tr>
+  <tr>
+    <th><i>T</i></th>
+    <th><tt>00100000001001001000001011000101</tt></th>
+    <th><tt>0xa3412404</tt></th>
+    </tr>
+  <tr>
+    <th><i>A|C|G|T</i></th>
+    <th><tt>11111011111111111110111111111111</tt></th>
+    <th><tt>0xfff7ffdf</tt></th>
+  </tr>
+  </table>
+
+We may set the above letter using <a href="https://software.intel.com/sites/landingpage/IntrinsicsGuide/">Intel Intrinsics</a>
+
+<p>
+  <tt>__m128i m1 = _mm_set_epi32(0xa3412404, 0x40840a10, 0x1810c141, 0x0422108a);</tt>
+</p>
+
+
+Suppose there is a long reference sequence (for a human genome it may have a length of 3.2 billion symbols). There is also a set of short sequences (called <i>reads</i>), their size is around 50-300 symbols. We know that the reads are chunks of another long sequence which is in some way is close to the reference sequence. Our goal is to align those reads with respect to the reference sequence. 
 
 Suppose, we have a reference sequence
 <tt>ACGACAACCTTGTCGTTGGAGATCGGAAGAGCACACGTCTGAAC</tt>
