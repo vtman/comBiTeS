@@ -67,7 +67,7 @@ We may shuffle elements of the signature and form other signatures, i.e. <tt>CGA
 
 <h2 id="link_ternary">Ternary spaced seeds</h2>
 
-Binary seeds are good for general sequences. However, in genetics, the chance of pointwise mutations is different for pairs of symbols. Therefore there are <b>transition</b> (<tt>A &#8596; G</tt>, <tt>C <-> T</tt>) and <b>transversion</b> mutations (<tt>A <-> C</tt>, <tt>A <-> T</tt>, <tt>G <-> C</tt>, <tt>G <-> T</tt>). So, instead of binary seeds, we may use <b>ternary</b> ones. We keep the same notations as in <a href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-5-149">this paper</a>: <tt>_</tt> (do not care symbol), <tt>#</tt> (match), <tt>@</tt> (transition mismatch, i.e. when symbols <tt>A</tt> and <tt>G</tt>, <tt>C</tt> and <tt>T</tt> considered as the same symbols).
+Binary seeds are good for general sequences. However, in genetics, the chance of pointwise mutations is different for pairs of symbols. Therefore there are <b>transition</b> (<tt>A &#x27F7; G</tt>, <tt>C &#x27F7; T</tt>) and <b>transversion</b> mutations (<tt>A &#x27F7; C</tt>, <tt>A &#x27F7; T</tt>, <tt>G &#x27F7; C</tt>, <tt>G &#x27F7; T</tt>). So, instead of binary seeds, we may use <b>ternary</b> ones. We keep the same notations as in <a href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-5-149">this paper</a>: <tt>_</tt> (do not care symbol), <tt>#</tt> (match), <tt>@</tt> (transition mismatch, i.e. when symbols <tt>A</tt> and <tt>G</tt>, <tt>C</tt> and <tt>T</tt> considered as the same symbols).
 
 
 <h2 id="link_form">Forming signatures</h2>
