@@ -9,6 +9,7 @@ Software tools to work with genetic sequences (reference sequences and short rea
     <li><a href="#link_seed">Spaced seeds</a></li>
     <li><a href="#link_ternary">Ternary spaced seeds</a></li>	  
     <li><a href="#link_form">Forming signatures</a></li>
+    <li><a href="#link_tools">Tools</a></li>
   </ul>
   </nav>
 
@@ -73,3 +74,16 @@ Suppose there is a binary seed of length <i>L</i> and weight <i>w</i> (number of
 In the case of ternary seeds, we need to create one array of bits (<tt>A|G</tt>) for <tt>@</tt>-elements. So, for a given ternary seed we form two binary seeds: 1) replace <tt>&#x5f;</tt> and <tt>@</tt> by <tt>0</tt>, <tt>#</tt> by <tt>1</tt>, 2) replace <tt>&#x5f;</tt> and <tt>#</tt> by <tt>0</tt>, <tt>@</tt> by <tt>1</tt>. Let their weights be <i>w<sub>#</sub></i> and <i>w<sub>@</sub></i>. By definition, the total weight is <i>w = w<sub>#</sub> + w<sub>@</sub>/2</i> and the number of bits required to store the signature is the double weight, i.e. <i>2w<sub>#</sub> + w<sub>@</sub></i>. So, #-seed provides us with two arrays (<tt>A|C</tt> and <tt>A|G</tt>) each of length <i>w<sub>#</sub></i>, and @-seed with one array (<tt>A|G</tt>) of length <i>w<sub>@</sub></i>.
 
 If there are more than 32 symbols, we must concatenate corresponding bits into one <i>2w</i>-bit number.
+
+<h2 id="link_tools">Tools</h2>
+
+To compile the codes one can use oneAPI <a href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/toolkits.html">compiler</a> 
+
+OpenMP is used. Possible command line for compilation
+
+<div>icpc combitesBinary.cpp -std=c++17 -qopenmp -o combitesB.exe</div>
+
+Please uncomment WIN32 definition if you compile for Windows OS (different functions to allocate aligned memeory are used).
+
+Example output files can be found in the Examples folder.
+
